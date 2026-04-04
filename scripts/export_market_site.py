@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
@@ -369,6 +370,21 @@ def _live_widget_config() -> dict[str, Any]:
     }
 
 
+def _live_api_config() -> dict[str, Any]:
+    base_url = os.getenv("MARKET_LIVE_API_BASE_URL", "").strip().rstrip("/")
+    return {
+        "enabled": bool(base_url),
+        "base_url": base_url,
+        "refresh_seconds": 30,
+        "symbols": ["SPY", "QQQ", "DIA", "IWM", "VIX", "AAPL", "MSFT", "NVDA"],
+        "chart": {
+            "symbol": "SPY",
+            "range": "1D",
+        },
+        "notes": "Set MARKET_LIVE_API_BASE_URL to your deployed serverless backend root URL (e.g. https://your-app.vercel.app).",
+    }
+
+
 def _copy_chart_assets() -> list[dict[str, str]]:
     ASSETS_DIR.mkdir(parents=True, exist_ok=True)
     copied: list[dict[str, str]] = []
@@ -495,6 +511,7 @@ def build_payload() -> dict[str, Any]:
             "top_coefficients": top_coefficients,
         },
         "live_widgets": _live_widget_config(),
+        "live_api": _live_api_config(),
         "charts": charts,
     }
     return payload

@@ -1,7 +1,7 @@
 {
   "status": "ok",
   "message": "Institutional dashboard payload generated from local outputs/.",
-  "generated_at_utc": "2026-04-04T19:03:08.635675+00:00",
+  "generated_at_utc": "2026-04-04T23:34:14.622491+00:00",
   "available_sources": [
     "outputs/predictions.csv",
     "outputs/strategy_h1.csv",
@@ -17401,6 +17401,26 @@
         ]
       }
     }
+  },
+  "live_api": {
+    "enabled": false,
+    "base_url": "",
+    "refresh_seconds": 30,
+    "symbols": [
+      "SPY",
+      "QQQ",
+      "DIA",
+      "IWM",
+      "VIX",
+      "AAPL",
+      "MSFT",
+      "NVDA"
+    ],
+    "chart": {
+      "symbol": "SPY",
+      "range": "1D"
+    },
+    "notes": "Set MARKET_LIVE_API_BASE_URL to your deployed serverless backend root URL (e.g. https://your-app.vercel.app)."
   },
   "charts": [
     {

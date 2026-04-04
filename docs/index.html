@@ -23,6 +23,7 @@
         <div class="section-head">
           <h2>Live Market Tape</h2>
         </div>
+        <div id="live-quote-cards" class="live-quote-grid"></div>
         <div id="live-ticker-tape" class="widget-shell"></div>
       </section>
 
@@ -40,7 +41,8 @@
         </div>
         <div class="live-grid">
           <article class="panel panel-large">
-            <h3>Primary Market Chart</h3>
+            <h3>Primary Market Chart (Live API / Fallback)</h3>
+            <div id="live-api-chart" class="chart-host chart-host-lg"></div>
             <div id="live-main-chart" class="widget-shell widget-shell-large"></div>
           </article>
           <article class="panel panel-large">

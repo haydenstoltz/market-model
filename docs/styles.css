@@ -239,6 +239,52 @@ body {
   gap: 10px;
 }
 
+.live-quote-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.quote-card {
+  border: 1px solid var(--line);
+  background: rgba(11, 20, 34, 0.96);
+  padding: 10px;
+}
+
+.quote-symbol {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12px;
+  color: #b7c8e5;
+  letter-spacing: 0.08em;
+}
+
+.quote-price {
+  margin-top: 4px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.quote-change {
+  margin-top: 6px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12px;
+}
+
+.quote-change.good {
+  color: #7ee1b5;
+}
+
+.quote-change.bad {
+  color: #ff8f9d;
+}
+
+.quote-meta {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .chart-stack {
   display: grid;
   gap: 10px;
@@ -258,6 +304,10 @@ body {
 
 .chart-host-lg {
   min-height: 370px;
+}
+
+#live-api-chart {
+  margin-bottom: 8px;
 }
 
 .chart-host-xl {
@@ -371,6 +421,10 @@ tr:last-child td {
   border: 0;
 }
 
+.is-hidden {
+  display: none !important;
+}
+
 @media (max-width: 1280px) {
   .snapshot-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -379,6 +433,9 @@ tr:last-child td {
   .chart-two-col,
   .table-grid {
     grid-template-columns: 1fr;
+  }
+  .live-quote-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -391,6 +448,9 @@ tr:last-child td {
     grid-template-columns: 1fr;
   }
   .snapshot-grid {
+    grid-template-columns: 1fr;
+  }
+  .live-quote-grid {
     grid-template-columns: 1fr;
   }
   .panel-large,

@@ -8,6 +8,11 @@ const PALETTE = [
   '#ffa95e',
 ];
 
+const DEFAULT_LIVE_SYMBOLS = ['SPY', 'QQQ', 'DIA', 'IWM', 'VIX', 'AAPL', 'MSFT', 'NVDA'];
+const DEFAULT_LIVE_CHART = { symbol: 'SPY', range: '1D' };
+let liveRefreshTimer = null;
+let liveFetchInFlight = false;
+
 function el(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -47,6 +52,51 @@ async function loadPayload() {
     throw new Error(`Failed to load market.json (${response.status})`);
   }
   return response.json();
+}
+
+function normalizeBaseUrl(url) {
+  if (!url) return '';
+  return String(url).trim().replace(/\/+$/, '');
+}
+
+function getLiveApiConfig(payload) {
+  const cfg = payload.live_api || {};
+  const baseUrl = normalizeBaseUrl(cfg.base_url);
+  return {
+    enabled: Boolean(cfg.enabled && baseUrl),
+    baseUrl,
+    refreshSeconds: Math.max(10, Number(cfg.refresh_seconds || 30)),
+    symbols: Array.isArray(cfg.symbols) && cfg.symbols.length ? cfg.symbols : DEFAULT_LIVE_SYMBOLS,
+    chart: {
+      symbol: (cfg.chart && cfg.chart.symbol) || DEFAULT_LIVE_CHART.symbol,
+      range: (cfg.chart && cfg.chart.range) || DEFAULT_LIVE_CHART.range,
+    },
+  };
+}
+
+function stopLiveRefresh() {
+  if (liveRefreshTimer) {
+    clearInterval(liveRefreshTimer);
+    liveRefreshTimer = null;
+  }
+}
+
+async function fetchJsonWithTimeout(url, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      cache: 'no-store',
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return await response.json();
+  } finally {
+    clearTimeout(id);
+  }
 }
 
 function renderHeroMeta(payload) {
@@ -158,6 +208,60 @@ function createEmpty(container, message) {
   container.innerHTML = '';
   const box = el('div', 'chart-empty', message);
   container.appendChild(box);
+}
+
+function setHidden(targetId, hidden) {
+  const node = document.getElementById(targetId);
+  if (!node) return;
+  if (hidden) node.classList.add('is-hidden');
+  else node.classList.remove('is-hidden');
+}
+
+function renderLiveQuoteCards(quotes) {
+  const root = document.getElementById('live-quote-cards');
+  if (!root) return;
+  root.innerHTML = '';
+
+  if (!quotes || !quotes.length) {
+    createEmpty(root, 'Live quote feed is unavailable.');
+    return;
+  }
+
+  quotes.forEach((q) => {
+    const card = el('article', 'quote-card');
+    card.appendChild(el('div', 'quote-symbol', q.symbol || 'N/A'));
+    card.appendChild(el('div', 'quote-price', fmtNumber(q.price, 2)));
+
+    const change = Number(q.change ?? 0);
+    const changePct = Number(q.changePct ?? 0);
+    const trendClass = change > 0 ? 'good' : change < 0 ? 'bad' : '';
+    card.appendChild(
+      el(
+        'div',
+        `quote-change ${trendClass}`,
+        `${change >= 0 ? '+' : ''}${fmtNumber(change, 2)} (${changePct >= 0 ? '+' : ''}${fmtNumber(changePct, 2)}%)`
+      )
+    );
+    card.appendChild(el('div', 'quote-meta', `Updated ${fmtDate(q.timestamp || q.asOf)}`));
+    root.appendChild(card);
+  });
+}
+
+function renderLiveApiChart(chartPayload) {
+  const points = (chartPayload && chartPayload.points) || [];
+  renderLineChart('live-api-chart', {
+    series: [
+      {
+        label: `${chartPayload.symbol || 'SYMBOL'} ${chartPayload.range || ''}`,
+        color: '#73b7ff',
+        data: points.map((p) => ({ date: p.t || p.timestamp, value: p.c ?? p.close })),
+      },
+    ],
+    includeZero: false,
+    yFormat: (v) => fmtNumber(v, 2),
+    height: 360,
+    ariaLabel: 'live market chart from api',
+  });
 }
 
 function parseSeries(series) {
@@ -457,6 +561,79 @@ function renderLiveWidgets(payload) {
   mountTradingViewWidget('live-ticker-tape', widgets.ticker_tape);
   mountTradingViewWidget('live-main-chart', widgets.main_chart);
   mountTradingViewWidget('live-market-overview', widgets.market_overview);
+  setHidden('live-quote-cards', true);
+  setHidden('live-api-chart', true);
+  setHidden('live-ticker-tape', false);
+  setHidden('live-main-chart', false);
+}
+
+async function refreshLiveApiData(payload) {
+  const cfg = getLiveApiConfig(payload);
+
+  if (!cfg.enabled || liveFetchInFlight) {
+    setHidden('live-quote-cards', true);
+    setHidden('live-ticker-tape', false);
+    setHidden('live-api-chart', true);
+    setHidden('live-main-chart', false);
+    return;
+  }
+
+  liveFetchInFlight = true;
+  try {
+    const quoteUrl = `${cfg.baseUrl}/api/quotes?symbols=${encodeURIComponent(cfg.symbols.join(','))}`;
+    const chartUrl = `${cfg.baseUrl}/api/chart?symbol=${encodeURIComponent(cfg.chart.symbol)}&range=${encodeURIComponent(cfg.chart.range)}`;
+
+    let quoteOk = false;
+    let chartOk = false;
+
+    try {
+      const quotePayload = await fetchJsonWithTimeout(quoteUrl, 10000);
+      if (quotePayload && quotePayload.ok && Array.isArray(quotePayload.quotes) && quotePayload.quotes.length) {
+        renderLiveQuoteCards(quotePayload.quotes);
+        quoteOk = true;
+      }
+    } catch (error) {
+      quoteOk = false;
+    }
+
+    try {
+      const chartPayload = await fetchJsonWithTimeout(chartUrl, 10000);
+      if (chartPayload && chartPayload.ok && Array.isArray(chartPayload.points) && chartPayload.points.length) {
+        renderLiveApiChart(chartPayload);
+        chartOk = true;
+      }
+    } catch (error) {
+      chartOk = false;
+    }
+
+    if (!quoteOk) {
+      setHidden('live-quote-cards', true);
+      setHidden('live-ticker-tape', false);
+    } else {
+      setHidden('live-quote-cards', false);
+      setHidden('live-ticker-tape', true);
+    }
+
+    if (!chartOk) {
+      setHidden('live-api-chart', true);
+      setHidden('live-main-chart', false);
+    } else {
+      setHidden('live-api-chart', false);
+      setHidden('live-main-chart', true);
+    }
+  } finally {
+    liveFetchInFlight = false;
+  }
+}
+
+function startLiveRefresh(payload) {
+  stopLiveRefresh();
+  const cfg = getLiveApiConfig(payload);
+  refreshLiveApiData(payload);
+  if (!cfg.enabled) return;
+  liveRefreshTimer = setInterval(() => {
+    refreshLiveApiData(payload);
+  }, cfg.refreshSeconds * 1000);
 }
 
 function renderCharts(payload) {
@@ -554,6 +731,7 @@ function renderTables(payload) {
 }
 
 function renderError(error) {
+  stopLiveRefresh();
   const root = document.getElementById('hero-meta');
   root.innerHTML = '';
   const card = el('article', 'hero-meta-card');
@@ -571,6 +749,7 @@ async function main() {
     renderHeroMeta(payload);
     renderSnapshots(payload);
     renderLiveWidgets(payload);
+    startLiveRefresh(payload);
     renderCharts(payload);
     renderTables(payload);
   } catch (error) {
@@ -579,3 +758,7 @@ async function main() {
 }
 
 main();
+
+window.addEventListener('beforeunload', () => {
+  stopLiveRefresh();
+});
