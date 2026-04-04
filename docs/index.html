@@ -3,60 +3,136 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Market Model Dashboard</title>
+    <title>Market Model Terminal</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="page">
+    <main class="dashboard-shell">
       <header class="hero">
-        <div>
-          <p class="eyebrow">market-model</p>
-          <h1>Market Model Dashboard</h1>
-          <p class="subhead">
-            Static view of the latest exported model outputs, strategy diagnostics, and recent predictions.
+        <div class="hero-copy">
+          <p class="kicker">Market Model Research Terminal</p>
+          <h1>Institutional Allocation Dashboard</h1>
+          <p class="hero-subhead">
+            Live market context with exported local model analytics. Static-hosted, human-reviewed, and deployment-safe.
           </p>
         </div>
-        <div class="hero-meta" id="hero-meta"></div>
+        <div id="hero-meta" class="hero-meta"></div>
       </header>
 
-      <section class="panel">
-        <h2>Latest predictions by horizon</h2>
-        <div id="prediction-cards" class="card-grid"></div>
+      <section class="section section-compact">
+        <div class="section-head">
+          <h2>Live Market Tape</h2>
+        </div>
+        <div id="live-ticker-tape" class="widget-shell"></div>
       </section>
 
-      <section class="panel">
-        <h2>Latest positions</h2>
-        <div id="position-cards" class="card-grid"></div>
+      <section class="section">
+        <div class="section-head">
+          <h2>Snapshot</h2>
+          <p class="section-note">Latest prediction state, current positioning, and best strategy diagnostics.</p>
+        </div>
+        <div id="snapshot-cards" class="snapshot-grid"></div>
       </section>
 
-      <section class="panel">
-        <h2>Charts</h2>
-        <div id="chart-grid" class="chart-grid"></div>
+      <section class="section">
+        <div class="section-head">
+          <h2>Live Market Surface</h2>
+        </div>
+        <div class="live-grid">
+          <article class="panel panel-large">
+            <h3>Primary Market Chart</h3>
+            <div id="live-main-chart" class="widget-shell widget-shell-large"></div>
+          </article>
+          <article class="panel panel-large">
+            <h3>Market Overview</h3>
+            <div id="live-market-overview" class="widget-shell widget-shell-large"></div>
+          </article>
+        </div>
       </section>
 
-      <section class="panel">
-        <h2>Strategy run summary</h2>
-        <div id="strategy-run-summary"></div>
+      <section class="section">
+        <div class="section-head">
+          <h2>Model Forecast Analytics</h2>
+          <p class="section-note">Prediction path, realized outcomes, and rolling directional hit-rate by horizon.</p>
+        </div>
+        <div class="chart-stack">
+          <article class="panel panel-xl">
+            <h3>Prediction History by Horizon</h3>
+            <div id="chart-predictions-by-horizon" class="chart-host chart-host-xl"></div>
+          </article>
+          <div class="chart-two-col">
+            <article class="panel panel-large">
+              <h3>Predicted vs Actual (H1)</h3>
+              <div id="chart-pred-vs-actual-h1" class="chart-host chart-host-lg"></div>
+            </article>
+            <article class="panel panel-large">
+              <h3>Rolling Sign Hit Rate by Horizon</h3>
+              <div id="chart-rolling-hit-rate" class="chart-host chart-host-lg"></div>
+            </article>
+          </div>
+        </div>
       </section>
 
-      <section class="panel">
-        <h2>Baseline strategy by horizon</h2>
-        <div id="baseline-horizon-summary"></div>
+      <section class="section">
+        <div class="section-head">
+          <h2>Strategy Analytics</h2>
+          <p class="section-note">Equity, drawdown, and weight/exposure across baseline variants and benchmark.</p>
+        </div>
+        <div class="chart-stack">
+          <article class="panel panel-xl">
+            <h3>Strategy Equity Curves</h3>
+            <div id="chart-strategy-curves" class="chart-host chart-host-xl"></div>
+          </article>
+          <article class="panel panel-xl">
+            <h3>Strategy Drawdowns</h3>
+            <div id="chart-strategy-drawdowns" class="chart-host chart-host-xl"></div>
+          </article>
+          <article class="panel panel-xl">
+            <h3>Strategy Exposure / Weight</h3>
+            <div id="chart-strategy-weights" class="chart-host chart-host-xl"></div>
+          </article>
+        </div>
       </section>
 
-      <section class="panel">
-        <h2>H3 confirmation summary</h2>
-        <div id="h3-confirmation-summary"></div>
+      <section class="section">
+        <div class="section-head">
+          <h2>Factor / Coefficient Diagnostics</h2>
+        </div>
+        <div class="chart-two-col">
+          <article class="panel panel-large">
+            <h3>Top Ridge Coefficients</h3>
+            <div id="chart-top-coefficients" class="chart-host chart-host-lg"></div>
+          </article>
+          <article class="panel panel-large">
+            <h3>Coefficient Table</h3>
+            <div id="table-ridge-coefs"></div>
+          </article>
+        </div>
       </section>
 
-      <section class="panel">
-        <h2>Top ridge coefficients</h2>
-        <div id="ridge-coef-summary"></div>
-      </section>
-
-      <section class="panel">
-        <h2>Recent predictions</h2>
-        <div id="recent-predictions"></div>
+      <section class="section">
+        <div class="section-head">
+          <h2>Summary Tables</h2>
+          <p class="section-note">Supporting tables from local exports.</p>
+        </div>
+        <div class="table-grid">
+          <article class="panel">
+            <h3>Strategy Run Summary</h3>
+            <div id="table-strategy-run-summary"></div>
+          </article>
+          <article class="panel">
+            <h3>Baseline by Horizon</h3>
+            <div id="table-baseline-horizon"></div>
+          </article>
+          <article class="panel">
+            <h3>H3 Confirmation Summary</h3>
+            <div id="table-h3-confirmation"></div>
+          </article>
+          <article class="panel">
+            <h3>Recent Predictions</h3>
+            <div id="table-recent-predictions"></div>
+          </article>
+        </div>
       </section>
     </main>
 
