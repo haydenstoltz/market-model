@@ -1,0 +1,21 @@
+{
+  "status": "placeholder",
+  "message": "Run the pipeline and then run python scripts/export_market_site.py to populate this page.",
+  "generated_at_utc": null,
+  "available_sources": [],
+  "warnings": [],
+  "latest_predictions_by_horizon": [],
+  "latest_positions": {
+    "strategy_h1": null,
+    "strategy_h1_threshold": null,
+    "strategy_h1_tiered": null
+  },
+  "tables": {
+    "strategy_run_summary": [],
+    "strategy_baseline_horizon_summary": [],
+    "strategy_h3_confirmation_summary": [],
+    "ridge_coef_summary": [],
+    "recent_predictions": []
+  },
+  "charts": []
+}
