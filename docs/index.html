@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Market Model Dashboard</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">market-model</p>
+          <h1>Market Model Dashboard</h1>
+          <p class="subhead">
+            Static view of the latest exported model outputs, strategy diagnostics, and recent predictions.
+          </p>
+        </div>
+        <div class="hero-meta" id="hero-meta"></div>
+      </header>
+
+      <section class="panel">
+        <h2>Latest predictions by horizon</h2>
+        <div id="prediction-cards" class="card-grid"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Latest positions</h2>
+        <div id="position-cards" class="card-grid"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Charts</h2>
+        <div id="chart-grid" class="chart-grid"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Strategy run summary</h2>
+        <div id="strategy-run-summary"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Baseline strategy by horizon</h2>
+        <div id="baseline-horizon-summary"></div>
+      </section>
+
+      <section class="panel">
+        <h2>H3 confirmation summary</h2>
+        <div id="h3-confirmation-summary"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Top ridge coefficients</h2>
+        <div id="ridge-coef-summary"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Recent predictions</h2>
+        <div id="recent-predictions"></div>
+      </section>
+    </main>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>
