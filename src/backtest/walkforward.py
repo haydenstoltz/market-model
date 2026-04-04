@@ -16,6 +16,7 @@ from src.models.baselines import make_model
 class BacktestResult:
     predictions: pd.DataFrame
     metrics: pd.DataFrame
+    coefficient_records: pd.DataFrame
 
 
 def _with_date_column(df: pd.DataFrame) -> pd.DataFrame:
@@ -30,6 +31,22 @@ def _with_date_column(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def _extract_coefficients(model, feature_names: list[str]) -> dict[str, float]:
+    """Return model coefficients keyed by feature name when available."""
+    estimator = model
+    if hasattr(model, "named_steps"):
+        estimator = model.named_steps.get("model", model)
+
+    if not hasattr(estimator, "coef_"):
+        return {}
+
+    coef = np.asarray(estimator.coef_, dtype=float).ravel()
+    if coef.shape[0] != len(feature_names):
+        return {}
+
+    return {name: float(value) for name, value in zip(feature_names, coef)}
+
+
 def run_walkforward_backtest(
     features: pd.DataFrame,
     targets: pd.DataFrame,
@@ -38,6 +55,7 @@ def run_walkforward_backtest(
     model_name: str = "ridge",
     start: str | None = None,
     end: str | None = None,
+    log_window_runtime: bool = True,
 ) -> BacktestResult:
     """Expanding-window walk-forward with strict train<test date separation."""
     feat_df = _with_date_column(features)
@@ -60,6 +78,7 @@ def run_walkforward_backtest(
     )
 
     pred_rows: list[dict[str, float | int | str]] = []
+    coef_rows: list[dict[str, float | int | str]] = []
     feature_cols = [c for c in joined.columns if not c.startswith("target_h")]
     feature_cols = [c for c in feature_cols if joined[c].notna().any()]
     if not feature_cols:
@@ -70,7 +89,7 @@ def run_walkforward_backtest(
     for h in horizons:
         target_col = f"target_h{h}"
         if target_col not in joined.columns:
-            raise ValueError(f"Missing target column '{target_col}' in modeling frame.")
+            raise ValueError(f"Missing target column {target_col} in modeling frame.")
         printed_debug = False
 
         max_i = len(joined) - h
@@ -83,7 +102,8 @@ def run_walkforward_backtest(
             y_true_val = joined.iloc[i][target_col]
             if pd.isna(y_true_val):
                 step_end = time.time()
-                print(f"[backtest] horizon {h} window {window_idx} took {step_end - step_start:.2f}s")
+                if log_window_runtime:
+                    print(f"[backtest] horizon {h} window {window_idx} took {step_end - step_start:.2f}s")
                 continue
 
             train_slice = joined.iloc[:i]
@@ -93,7 +113,8 @@ def run_walkforward_backtest(
             mask = ~train_y.isna()
             if mask.sum() == 0:
                 step_end = time.time()
-                print(f"[backtest] horizon {h} window {window_idx} took {step_end - step_start:.2f}s")
+                if log_window_runtime:
+                    print(f"[backtest] horizon {h} window {window_idx} took {step_end - step_start:.2f}s")
                 continue
 
             X_train = train_slice.loc[mask, feature_cols]
@@ -103,7 +124,8 @@ def run_walkforward_backtest(
             valid_cols = X_train.columns[X_train.notna().any()]
             if len(valid_cols) == 0:
                 step_end = time.time()
-                print(f"[backtest] horizon {h} window {window_idx} took {step_end - step_start:.2f}s")
+                if log_window_runtime:
+                    print(f"[backtest] horizon {h} window {window_idx} took {step_end - step_start:.2f}s")
                 continue
             X_train = X_train[valid_cols]
             X_test = X_test[valid_cols]
@@ -125,6 +147,19 @@ def run_walkforward_backtest(
 
             model = make_model(model_name)
             model.fit(X_train, y_train)
+
+            coef_map = _extract_coefficients(model, list(valid_cols))
+            for feature_name, coef in coef_map.items():
+                coef_rows.append(
+                    {
+                        "date": test_date.strftime("%Y-%m-%d"),
+                        "horizon": h,
+                        "window_idx": int(window_idx),
+                        "feature_name": feature_name,
+                        "coef": float(coef),
+                    }
+                )
+
             y_pred = float(model.predict(X_test)[0])
             y_true = float(y_true_val)
 
@@ -138,7 +173,8 @@ def run_walkforward_backtest(
                 }
             )
             step_end = time.time()
-            print(f"[backtest] horizon {h} window {window_idx} took {step_end - step_start:.2f}s")
+            if log_window_runtime:
+                print(f"[backtest] horizon {h} window {window_idx} took {step_end - step_start:.2f}s")
 
     print(f"[backtest] total runtime: {time.time() - start_total:.2f}s")
 
@@ -155,4 +191,9 @@ def run_walkforward_backtest(
         metrics_rows.append({"horizon": h, "mae": mae, "rmse": rmse, "n": int(len(sub))})
 
     metrics_df = pd.DataFrame(metrics_rows)
-    return BacktestResult(predictions=pred_df, metrics=metrics_df)
+
+    coef_df = pd.DataFrame(coef_rows)
+    if not coef_df.empty:
+        coef_df = coef_df.sort_values(["horizon", "date", "feature_name"]).reset_index(drop=True)
+
+    return BacktestResult(predictions=pred_df, metrics=metrics_df, coefficient_records=coef_df)

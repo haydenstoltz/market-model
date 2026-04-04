@@ -1,6 +1,36 @@
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
 .venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Env / secrets
+.env
+.env.*
+*.env
+
+# Build / cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Project outputs
 outputs/
 data/raw/
 data/processed/
+
