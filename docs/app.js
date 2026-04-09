@@ -436,7 +436,10 @@ function renderCoefficientBars(targetId, rows) {
 
   const width = Math.max(host.clientWidth || 820, 420);
   const height = Math.max(360, data.length * 28 + 40);
-  const margin = { top: 12, right: 18, bottom: 20, left: 220 };
+  const desiredLabelPad = 220;
+  const maxSidePad = Math.floor((width - 120) / 2);
+  const sidePad = Math.max(80, Math.min(desiredLabelPad, maxSidePad));
+  const margin = { top: 12, right: sidePad, bottom: 20, left: sidePad };
   const innerW = width - margin.left - margin.right;
   const innerH = height - margin.top - margin.bottom;
   const rowH = innerH / data.length;
